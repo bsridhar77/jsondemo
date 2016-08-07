@@ -1,0 +1,15 @@
+{
+  "employeeId":"dom0064",
+  "desc":"desc dom004",
+   "address":[
+     {
+     	"streetAddress":"Darwin Dr",
+     	"city":"Fremont"
+     }
+     ],
+    "dept":{
+      	"deptno":"1234",
+        "deptname":"45",
+        "streetAddress" : "Darwin Dr"
+    }
+}

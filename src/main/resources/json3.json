@@ -1,0 +1,7 @@
+{
+"name":"sri",
+"age":29 ,
+"address": {
+		"streetAddress": "100 Wall Street","city": "New York" 
+		}
+}

@@ -140,6 +140,8 @@ public String includeFieldsByConfig(String fields,String jsonString){
 		
 		try {
 			node = mapper.readTree(jsonString);
+			
+			//there should be a better approach than what I have done below... For now, I am doing like this...
 			for(String str:fieldToIncludeListr){
 			       Matcher m = pattern.matcher(str); 
 			       strBuf.append(NEWLINE)

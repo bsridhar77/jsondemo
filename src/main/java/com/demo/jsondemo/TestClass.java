@@ -1,12 +1,15 @@
 package com.demo.jsondemo;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,9 +28,9 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 public class TestClass {
 	
-	private static final Logger LOG = Logger.getLogger(TestClass.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TestClass.class);
 	
-	public static final String FOLDER_PATH="D:\\jsondemo\\src\\main\\resources\\";	
+	
 	
 	
 	
@@ -55,9 +58,10 @@ public class TestClass {
 	}
 	
 	
-	public String findAndUpdateFieldByKey(String jsonString, String key,String repValue){
+	public String findAndUpdateFieldByKey(String jsonString, List keyList,String repValue){
 		
-		LOG.debug("Entering");
+		//LOG.debug("Entering");
+		StringBuffer strBuf=new StringBuffer();
 		
 		String fieldNodeStr=null;
 		try {
@@ -67,19 +71,28 @@ public class TestClass {
 				    .mappingProvider(new JacksonMappingProvider())
 				    .build();
 
-			JsonNode newJson=JsonPath.using(config).parse(jsonString).set("$." +key,repValue).json();
+			fieldNodeStr=jsonString;
+			for(Object str:keyList){
+				String s=(String) str;
+			
+			JsonNode newJson=JsonPath.using(config).parse(fieldNodeStr).set("$."+s,repValue).json();
+			
 			fieldNodeStr = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(newJson);
+			
+		
+			}
 		} catch (JsonProcessingException e) {
 			LOG.error("Exception:",e);
 		}
-		LOG.debug("Leaving.");
+	
 		return fieldNodeStr;
+		
 	}
 
 
-public String getValues(String key,String jsonString){
+public static String getValues(String key,String jsonString){
 	String fieldNodeStr =null;
-	LOG.debug("Entering");
+//	LOG.debug("Entering");
 	
 	try {
 		
@@ -93,76 +106,44 @@ public String getValues(String key,String jsonString){
 	}catch (Exception e) {
 		LOG.error("Exception:",e);
 	}
-	LOG.debug("Leaving.");
+	//LOG.debug("Leaving.");
 	return fieldNodeStr;
 }
 
-
-/*
- * 
- * Prefix all fields with $.(DONE)
- * If array field need to suffix [*] (Can be first field are anywhere in-between the hierarchy of fields
- * 
- */
 
 	public static void main(String arg[]){
 		
 		TestClass testObj=new TestClass();
 		try {
 		
+			String str1 = readFile("Test_Json.json");
+				
+				System.out.println("***********START:Demo for Masking.");
+				String maskString="?????";
+
+				String[] fieldsToMask={"employeeId","requester[*].demographic.firstName"};
+				List fieldsToMaskList=Arrays.asList(fieldsToMask);
+				System.out.println("Masking..." + Arrays.toString(fieldsToMask) + " Using: maskString" + maskString);
+				str1=testObj.findAndUpdateFieldByKey(str1,fieldsToMaskList,maskString);
+		
+				
+				System.out.println("Masked..." + Arrays.toString(fieldsToMask) + " Using: maskString" + maskString);
+			
+				System.out.println("***********END:Demo for Masking.");
+				
+				
 				System.out.println("***********START: Demo for Including Selected Fields...");
 				
-				String str = readFile(FOLDER_PATH + "Test_Json.json");
+
+
+				String[] fieldsToInclude={"employeeId","requester[*].demographic.firstName","manager","administrator.isSuperUser","requester[*].demographic.lastName","salesId","administrator.userId"};
+				List fieldsToIncludeList=Arrays.asList(fieldsToInclude);
+				System.out.println("Including..." + Arrays.toString(fieldsToInclude) );
 				
-				System.out.println("Original...");
-				System.out.println(str);
+				System.out.println(testObj.includeFieldsFromPayload(fieldsToIncludeList,str1));
 				
-				
-				
-				//TODO: Convert requester to $.requester[*] if requester is an array field
-				System.out.println("Including Requester...");
-				System.out.println(testObj.getValues("requester[*]",str));
-				
-				//TODO: Convert manager to $.manager
-				System.out.println("Including Manager...");
-				System.out.println(testObj.getValues("manager",str));
-				
-				
-				//TODO: Convert requester.demographic.firstName to $.requester[*].demographic.firstName
-				System.out.println("Including requester.demographic.firstName...");
-				System.out.println(testObj.getValues("requester[*].demographic.firstName",str));
-				
+				System.out.println("Included..." + Arrays.toString(fieldsToInclude) );
 				System.out.println("***********END: Demo for Including Selected Fields...");
-				System.out.println("");
-		
-				System.out.println("");
-				System.out.println("***********START: Demo for Masking...");
-			
-				System.out.println("Original...");
-				System.out.println(str);
-				
-				
-				//TODO: Convert administrator.userId to $.administrator.userId
-				String fieldsToMask1="administrator.userId";
-				String maskString="?????";
-				System.out.println("Masking...administrator.userId as :" + maskString);
-				str=testObj.findAndUpdateFieldByKey(str,fieldsToMask1,maskString);
-				
-				System.out.println("Masked...administrator.userId as :" + maskString);
-				System.out.println(str);
-				
-				
-				//TODO: Convert requester.demographic.firstName to $.requester[*].demographic.firstName
-				String firstNameField="requester[*].demographic.firstName";
-				String maskString2="*****";
-				System.out.println("Masking...demographic.firstName as :" + maskString2);
-				System.out.println(testObj.findAndUpdateFieldByKey(str,firstNameField,maskString2));
-				str=testObj.findAndUpdateFieldByKey(str,firstNameField,maskString2);
-				System.out.println("Masked...demographic.firstName as :" + maskString2);
-				System.out.println(str);
-				
-				
-				System.out.println("***********END:Demo for Masking.");
 				System.out.println("");
 				
 				
@@ -176,11 +157,56 @@ public String getValues(String key,String jsonString){
 	
 	
 	
+	
 
+	public String removeTrailingCharacter(String str) {
+	    if (str != null && str.length() > 0 && str.charAt(str.length()-1)==',') {
+	      str = str.substring(0, str.length()-1);
+	    }
+	    return str;
+	}
 		
-	private static String readFile(String path)  throws IOException 
+	public  String includeFieldsFromPayload(List fieldsToIncludeList, String str1) throws JsonProcessingException {
+		StringBuffer strBuf=new StringBuffer();
+		strBuf.append("{");
+		for(Object str:fieldsToIncludeList){
+			String s=(String) str;
+			
+			strBuf.append("\r")
+				 .append('"')
+				 .append(removeCharacters(s))
+				 .append('"')
+				 .append(":")
+				 .append(getValues(s,str1))
+				 .append(",");
+			
+		}
+		String finalStr=strBuf.toString();
+		finalStr=removeTrailingCharacter(finalStr) + "\r" +"}";
+		return finalStr;
+	}
+
+	private String removeCharacters(String str){
+		str = str.replace("[", "");
+		str = str.replace("]", "");
+		str = str.replace("*", "");
+		return str;
+	}
+	
+
+	private static String readFile(String filename)  throws IOException 
 	{
-		  byte[] encoded = Files.readAllBytes(Paths.get(path));
-		  return new String(encoded, "UTF-8");
+		
+		
+		String thisLine=null;
+		StringBuffer strBuf=new StringBuffer();
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(
+		       TestClass.class.getResourceAsStream("/" +filename), "UTF-8"));
+		
+		while ((thisLine = br.readLine()) != null) {
+            strBuf.append(thisLine);
+         }    
+		return strBuf.toString();
 	}
 }

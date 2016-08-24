@@ -1,0 +1,6 @@
+Populate metricsByDay Collection using metricsByHour Collection
+Queries for UI Requests
+
+Trigger every 24 hours the population of metricsByDay
+Design  Decisions Document for implementation of Persistenc and Query logic of metrics data
+Strategy of population of servicename,ipaddress,port and typename dropdowns in UI
